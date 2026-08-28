@@ -21,7 +21,7 @@ import type { Locale } from "@/i18n/config";
 
 export type NotifyResult =
   | { sent: true }
-  | { sent: false; reason: "not-configured" | "failed"; detail?: string };
+  | { sent: false; reason: "not-configured" | "failed"; detail?: string | undefined };
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -102,7 +102,14 @@ ${rows
 export async function sendBookingInvite(booking: BookingNotification): Promise<NotifyResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) return { sent: false, reason: "not-configured" };
+  if (!apiKey || !from) {
+    // Naming the absent variable turns a silent "no email" into something
+    // actionable; half-configured is far more common than un-configured.
+    const missing = [!apiKey && "RESEND_API_KEY", !from && "EMAIL_FROM"]
+      .filter(Boolean)
+      .join(", ");
+    return { sent: false, reason: "not-configured", detail: missing };
+  }
 
   const { subject, html, text } = render(booking);
 

@@ -125,7 +125,16 @@ export async function createBooking(
     attendee: { name, email },
   });
 
-  if (!result.sent && result.reason === "failed") {
+  // Logged either way. A silently skipped invitation is indistinguishable from
+  // a delivered one in production otherwise, which turns "did the attendee get
+  // it?" into guesswork.
+  if (result.sent) {
+    console.log(`Booking ${uid}: invitation sent to attendee.`);
+  } else if (result.reason === "not-configured") {
+    console.warn(
+      `Booking ${uid}: invitation not sent, missing configuration: ${result.detail}.`,
+    );
+  } else {
     console.error(`Booking ${uid} saved, but its invitation could not be sent: ${result.detail}`);
   }
 
