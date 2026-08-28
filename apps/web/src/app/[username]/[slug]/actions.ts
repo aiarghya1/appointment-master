@@ -129,7 +129,7 @@ export async function createBooking(
   // a delivered one in production otherwise, which turns "did the attendee get
   // it?" into guesswork.
   if (result.sent) {
-    console.log(`Booking ${uid}: invitation sent to attendee.`);
+    console.log(`Booking ${uid}: invitation accepted by provider, id ${result.id ?? "unknown"}.`);
   } else if (result.reason === "not-configured") {
     console.warn(
       `Booking ${uid}: invitation not sent, missing configuration: ${result.detail}.`,

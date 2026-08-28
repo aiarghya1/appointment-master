@@ -20,7 +20,8 @@ import type { Locale } from "@/i18n/config";
  */
 
 export type NotifyResult =
-  | { sent: true }
+  /** `id` is the provider's message id, for tracing delivery after the fact. */
+  | { sent: true; id?: string | undefined }
   | { sent: false; reason: "not-configured" | "failed"; detail?: string | undefined };
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
@@ -152,7 +153,11 @@ export async function sendBookingInvite(booking: BookingNotification): Promise<N
     if (!response.ok) {
       return { sent: false, reason: "failed", detail: `${response.status} ${await response.text()}` };
     }
-    return { sent: true };
+
+    // A 2xx means the provider accepted the message, not that it reached an
+    // inbox. Keeping the id is what makes the difference auditable later.
+    const body = (await response.json().catch(() => null)) as { id?: string } | null;
+    return { sent: true, id: body?.id };
   } catch (error) {
     return { sent: false, reason: "failed", detail: error instanceof Error ? error.message : String(error) };
   }
