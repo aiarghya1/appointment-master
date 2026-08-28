@@ -19,3 +19,7 @@ test-results/
 
 # Embedded development database
 .pglite/
+
+# Editor/agent tooling — local only
+.agents/
+skills-lock.json
