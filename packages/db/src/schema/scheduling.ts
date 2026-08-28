@@ -19,7 +19,7 @@ import { organizations, users } from "./identity";
 /**
  * Schedules, availability, and event types.
  *
- * The storage model mirrors `@scheduler/availability` exactly: recurring rules
+ * The storage model mirrors `@appointment-master/availability` exactly: recurring rules
  * hold wall-clock minutes, the IANA zone lives on the parent schedule, and
  * nothing here stores a UTC instant. The engine reads these rows verbatim.
  */

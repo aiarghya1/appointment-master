@@ -1,5 +1,5 @@
 {
-  "name": "scheduler",
+  "name": "appointment-master",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -7,12 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @scheduler/web",
-    "build": "npm run build --workspace @scheduler/web",
+    "dev": "npm run dev --workspace @appointment-master/web",
+    "build": "npm run build --workspace @appointment-master/web",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --build --force",
-    "lint": "npm run lint --workspace @scheduler/web"
+    "lint": "npm run lint --workspace @appointment-master/web"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.11",

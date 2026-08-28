@@ -1,6 +1,6 @@
 "use server";
 
-import { isBookingConflict, getDb, schema } from "@scheduler/db";
+import { isBookingConflict, getDb, schema } from "@appointment-master/db";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { loadPublicEventType, loadSlots } from "@/server/booking";

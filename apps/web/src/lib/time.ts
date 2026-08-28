@@ -1,4 +1,4 @@
-import type { Interval } from "@scheduler/availability";
+import type { Interval } from "@appointment-master/availability";
 import { DateTime } from "luxon";
 
 /**

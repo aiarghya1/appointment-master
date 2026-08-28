@@ -10,8 +10,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Scheduler",
-    template: "%s · Scheduler",
+    default: "Appointment Master",
+    template: "%s · Appointment Master",
   },
   description: "Scheduling that respects everyone's calendar — and everyone's time zone.",
 };

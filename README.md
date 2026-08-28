@@ -1,9 +1,6 @@
-# scheduler
+# Appointment Master
 
 A scheduling platform built for polish and for correctness under contention.
-
-> `scheduler` is a working name. Renaming is a find-and-replace over
-> `@scheduler/*` plus the root `package.json`.
 
 ## Layout
 
@@ -30,7 +27,7 @@ To run the app you will need a Postgres database — copy `.env.example` to
 `.env` and fill it in, then:
 
 ```bash
-npm run generate --workspace @scheduler/db && npm run migrate --workspace @scheduler/db
+npm run generate --workspace @appointment-master/db && npm run migrate --workspace @appointment-master/db
 ```
 
 ## Three decisions worth knowing about

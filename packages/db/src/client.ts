@@ -35,7 +35,7 @@ export type Database = PgDatabase<
 
 declare global {
   // eslint-disable-next-line no-var
-  var __schedulerDb: Promise<Database> | undefined;
+  var __appointmentMasterDb: Promise<Database> | undefined;
 }
 
 const isProduction = () => process.env.NODE_ENV === "production";
@@ -101,7 +101,7 @@ function create(): Promise<Database> {
  * re-evaluation on hot reload would otherwise open a new pool on every edit.
  */
 export function getDb(): Promise<Database> {
-  return (globalThis.__schedulerDb ??= create());
+  return (globalThis.__appointmentMasterDb ??= create());
 }
 
 /** True when running on the embedded development database. */

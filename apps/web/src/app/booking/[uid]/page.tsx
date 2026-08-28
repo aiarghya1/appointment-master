@@ -1,4 +1,4 @@
-import { getDb, schema } from "@scheduler/db";
+import { getDb, schema } from "@appointment-master/db";
 import { eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 import type { Metadata } from "next";

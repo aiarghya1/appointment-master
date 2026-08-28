@@ -4,6 +4,9 @@ export default function HomePage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-6 p-6">
       <div>
+        <p className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent">
+          Appointment Master
+        </p>
         <h1 className="text-3xl font-semibold tracking-tight text-balance">
           Scheduling that gets the time zone right.
         </h1>

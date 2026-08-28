@@ -5,8 +5,8 @@ import {
   type Interval,
   type Schedule,
   type Weekday,
-} from "@scheduler/availability";
-import { getDb, schema } from "@scheduler/db";
+} from "@appointment-master/availability";
+import { getDb, schema } from "@appointment-master/db";
 import { and, eq, gt, inArray, lt } from "drizzle-orm";
 
 /**
@@ -14,8 +14,8 @@ import { and, eq, gt, inArray, lt } from "drizzle-orm";
  *
  * This module's whole job is translation: load what the host configured, hand
  * it to the engine in the engine's own vocabulary, and return instants. All
- * scheduling logic lives in `@scheduler/availability` — nothing here decides
- * when someone is free.
+ * scheduling logic lives in `@appointment-master/availability` — nothing here
+ * decides when someone is free.
  */
 
 export interface PublicEventType {
