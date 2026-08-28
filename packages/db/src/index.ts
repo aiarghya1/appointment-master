@@ -1,4 +1,4 @@
-export { db } from "./client.js";
-export type { Database } from "./client.js";
-export * as schema from "./schema/index.js";
-export { BookingConflictError, isBookingConflict } from "./errors.js";
+export { getDb, isEmbeddedDatabase } from "./client";
+export type { Database } from "./client";
+export * as schema from "./schema/index";
+export { BookingConflictError, isBookingConflict } from "./errors";

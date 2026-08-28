@@ -1,3 +1,3 @@
-export * from "./identity.js";
-export * from "./scheduling.js";
-export * from "./bookings.js";
+export * from "./identity";
+export * from "./scheduling";
+export * from "./bookings";

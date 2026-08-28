@@ -1,4 +1,4 @@
-import type { Interval } from "./types.js";
+import type { Interval } from "./types";
 
 /**
  * Set algebra over half-open instant ranges.

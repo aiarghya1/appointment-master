@@ -1,6 +1,6 @@
-import { interval, normalize, overlaps, pad } from "./interval.js";
-import { expandSchedule } from "./schedule.js";
-import type { Interval, Schedule } from "./types.js";
+import { interval, normalize, overlaps, pad } from "./interval";
+import { expandSchedule } from "./schedule";
+import type { Interval, Schedule } from "./types";
 
 const MINUTE_MS = 60_000;
 

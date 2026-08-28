@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 import { describe, expect, it } from "vitest";
-import { generateSlots } from "./slots.js";
-import type { Interval, Schedule, Weekday } from "./types.js";
+import { generateSlots } from "./slots";
+import type { Interval, Schedule, Weekday } from "./types";
 
 const MON = 1 as Weekday;
 const FRI = 5 as Weekday;

@@ -6,7 +6,7 @@ export type {
   Schedule,
   Weekday,
   WeeklyRule,
-} from "./types.js";
+} from "./types";
 
 export {
   contains,
@@ -18,9 +18,9 @@ export {
   pad,
   subtract,
   totalMinutes,
-} from "./interval.js";
+} from "./interval";
 
-export { expandSchedule, InvalidTimeZoneError } from "./schedule.js";
+export { expandSchedule, InvalidTimeZoneError } from "./schedule";
 
-export { generateSlots } from "./slots.js";
-export type { EventTypeConfig, SlotQuery } from "./slots.js";
+export { generateSlots } from "./slots";
+export type { EventTypeConfig, SlotQuery } from "./slots";

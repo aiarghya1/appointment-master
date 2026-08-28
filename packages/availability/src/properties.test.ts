@@ -1,9 +1,9 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { contains, normalize, overlaps, pad } from "./interval.js";
-import { expandSchedule } from "./schedule.js";
-import { generateSlots, type EventTypeConfig } from "./slots.js";
-import type { Interval, Schedule, Weekday } from "./types.js";
+import { contains, normalize, overlaps, pad } from "./interval";
+import { expandSchedule } from "./schedule";
+import { generateSlots, type EventTypeConfig } from "./slots";
+import type { Interval, Schedule, Weekday } from "./types";
 
 /**
  * Invariants that must hold for *every* input, not just the cases we thought

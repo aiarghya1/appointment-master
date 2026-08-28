@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { contains, intersect, normalize, overlaps, pad, subtract, totalMinutes } from "./interval.js";
-import type { Interval } from "./types.js";
+import { contains, intersect, normalize, overlaps, pad, subtract, totalMinutes } from "./interval";
+import type { Interval } from "./types";
 
 /** Build an interval from `HH:MM`-ish hour offsets on a fixed arbitrary day. */
 const BASE = Date.UTC(2026, 8, 1, 0, 0, 0);

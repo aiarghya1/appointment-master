@@ -14,7 +14,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { organizations, users } from "./identity.js";
+import { organizations, users } from "./identity";
 
 /**
  * Schedules, availability, and event types.

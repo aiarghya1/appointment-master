@@ -13,8 +13,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { organizations, users } from "./identity.js";
-import { eventTypes } from "./scheduling.js";
+import { organizations, users } from "./identity";
+import { eventTypes } from "./scheduling";
 
 /**
  * Bookings — and the one guarantee this product cannot get wrong.

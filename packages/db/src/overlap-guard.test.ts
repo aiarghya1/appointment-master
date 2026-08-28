@@ -4,7 +4,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { isBookingConflict } from "./errors.js";
+import { isBookingConflict } from "./errors";
 
 /**
  * Integration tests for the double-booking guarantee, run against a real

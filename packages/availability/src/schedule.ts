@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
-import { interval, intersect, normalize } from "./interval.js";
-import type { Interval, LocalInterval, Schedule } from "./types.js";
+import { interval, intersect, normalize } from "./interval";
+import type { Interval, LocalInterval, Schedule } from "./types";
 
 const MINUTES_PER_DAY = 1440;
 
