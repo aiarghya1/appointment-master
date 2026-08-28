@@ -1,0 +1,11 @@
+# The embedded development database never belongs in a deployment. It is
+# local-only by design, and the app refuses to use it in production.
+.pglite/
+packages/db/.pglite/
+
+.next/
+apps/web/.next/
+node_modules/
+coverage/
+playwright-report/
+test-results/

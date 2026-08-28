@@ -71,6 +71,17 @@ function upcoming(days: number, hour: number, lengthMinutes: number) {
 }
 
 async function seed() {
+  // This script's first act is to delete every user, which cascades to every
+  // schedule, event type, and booking in the database. That is harmless against
+  // the embedded development database and catastrophic against a real one, so
+  // pointing it at a remote database requires saying so out loud.
+  if (process.env.DATABASE_URL && process.env.SEED_CONFIRM !== "yes") {
+    throw new Error(
+      "Refusing to seed: DATABASE_URL is set, and seeding DELETES ALL EXISTING DATA.\n" +
+        "Re-run with SEED_CONFIRM=yes if that is genuinely what you want.",
+    );
+  }
+
   const db = await getDb();
 
   // Cascades clear schedules, rules, event types, and bookings with the host.

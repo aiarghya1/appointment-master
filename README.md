@@ -64,6 +64,38 @@ consults the session TimeZone — and Postgres bars stable expressions from
 generated columns. Keeping it in the database means every writer gets it,
 including psql and Drizzle Studio.
 
+## Deploying to Vercel
+
+The app builds without a database — every route that reads one is rendered on
+demand, so nothing touches Postgres at build time. It will not *run* without
+one: the embedded PGlite database is refused in production, because Vercel's
+filesystem is per-invocation and an embedded database would lose every booking
+when the function recycled.
+
+So a deployment needs a real Postgres first.
+
+1. **Create a database.** A Supabase project, or Vercel's own Postgres
+   integration. Either works; the schema uses only standard Postgres plus
+   `btree_gist`.
+2. **Set the two connection strings** in the Vercel project — add them
+   yourself, in the dashboard or via `vercel env add`, so the credentials are
+   never pasted anywhere else:
+   - `DATABASE_URL` — transaction pooler (port 6543 on Supabase)
+   - `DIRECT_URL` — direct/session connection (port 5432)
+3. **Run the migrations** against the new database. They are not run at deploy
+   time on purpose: a failed migration mid-build leaves a half-applied schema,
+   and it should be a deliberate step you can watch.
+   ```bash
+   npm run migrate --workspace @appointment-master/db
+   ```
+4. **Deploy.**
+   ```bash
+   vercel deploy --prod
+   ```
+
+Seeding is optional and destructive — it deletes all existing data — so
+against a remote database it refuses unless you pass `SEED_CONFIRM=yes`.
+
 ## Status
 
 Foundation and scheduling core are in place. Auth and tenancy, calendar sync,
