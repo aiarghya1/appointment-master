@@ -2,6 +2,17 @@
 
 A scheduling platform built for polish and for correctness under contention.
 
+**Live at [appointment-master.vercel.app](https://appointment-master.vercel.app)** —
+pick a time with the demo host at
+[/arghya](https://appointment-master.vercel.app/arghya):
+[15 minutes](https://appointment-master.vercel.app/arghya/intro),
+[30 minutes](https://appointment-master.vercel.app/arghya/30min), or an
+[hour](https://appointment-master.vercel.app/arghya/deep-dive).
+
+There is no sign-up yet, so that host is seeded demo data and is the only one.
+Bookings are real and shared: anything you enter is stored and visible to
+anyone else who visits, so do not put anything private in it.
+
 ## Layout
 
 ```
@@ -84,6 +95,22 @@ connection string is wired from one to the other and never copied by hand.
 Migrations run from the start command rather than the build. They are
 idempotent, so a restart re-checks and does nothing. If you scale past a single
 instance, move them to a `preDeployCommand` so concurrent boots cannot race.
+
+### Vercel
+
+Vercel is serverless, so there is no start command to hang migrations off.
+`vercel.json` folds them into the build instead:
+
+```json
+"buildCommand": "npm run migrate --workspace @appointment-master/db && npm run build"
+```
+
+Set `DATABASE_URL` and `DIRECT_URL` on the project before the first deploy —
+the build runs migrations, so it fails fast rather than shipping a site that
+cannot reach its database. Any Postgres works; the marketplace integrations
+wire the pooled URL automatically, but `DIRECT_URL` still has to be set by hand
+from the provider's direct (unpooled) connection string, because migrations
+need locks the transaction pooler cannot hold.
 
 ### Anywhere else
 
