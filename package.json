@@ -1,0 +1,26 @@
+{
+  "name": "scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @scheduler/web",
+    "build": "npm run build --workspace @scheduler/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --build --force",
+    "lint": "npm run lint --workspace @scheduler/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "fast-check": "^4.1.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}
