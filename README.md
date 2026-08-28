@@ -64,34 +64,43 @@ consults the session TimeZone — and Postgres bars stable expressions from
 generated columns. Keeping it in the database means every writer gets it,
 including psql and Drizzle Studio.
 
-## Deploying to Vercel
+## Deploying
 
 The app builds without a database — every route that reads one is rendered on
 demand, so nothing touches Postgres at build time. It will not *run* without
-one: the embedded PGlite database is refused in production, because Vercel's
-filesystem is per-invocation and an embedded database would lose every booking
-when the function recycled.
+one: the embedded PGlite database is refused in production, since it is
+single-connection and, on ephemeral filesystems, would lose every booking when
+the process recycled.
 
-So a deployment needs a real Postgres first.
+### Render (blueprint)
 
-1. **Create a database.** A Supabase project, or Vercel's own Postgres
-   integration. Either works; the schema uses only standard Postgres plus
-   `btree_gist`.
-2. **Set the two connection strings** in the Vercel project — add them
-   yourself, in the dashboard or via `vercel env add`, so the credentials are
-   never pasted anywhere else:
-   - `DATABASE_URL` — transaction pooler (port 6543 on Supabase)
-   - `DIRECT_URL` — direct/session connection (port 5432)
-3. **Run the migrations** against the new database. They are not run at deploy
-   time on purpose: a failed migration mid-build leaves a half-applied schema,
-   and it should be a deliberate step you can watch.
-   ```bash
-   npm run migrate --workspace @appointment-master/db
-   ```
-4. **Deploy.**
-   ```bash
-   vercel deploy --prod
-   ```
+`render.yaml` declares the database and the web service together, so the
+connection string is wired from one to the other and never copied by hand.
+
+1. Render dashboard → **New** → **Blueprint** → select this repository.
+2. Apply. Render provisions Postgres, builds, runs the migrations, and starts
+   the server.
+
+Migrations run from the start command rather than the build. They are
+idempotent, so a restart re-checks and does nothing. If you scale past a single
+instance, move them to a `preDeployCommand` so concurrent boots cannot race.
+
+### Anywhere else
+
+Any Node host plus any Postgres 14+ works. Provide two variables — they may be
+the same URL, and are only distinct where the provider separates pooled from
+direct connections (on Supabase, `DATABASE_URL` is the transaction pooler on
+6543 and `DIRECT_URL` the session pooler on 5432, because the transaction
+pooler cannot hold the locks migrations need):
+
+```bash
+npm run migrate --workspace @appointment-master/db
+npm run build
+npm run start --workspace @appointment-master/web
+```
+
+The database must allow `CREATE EXTENSION btree_gist`, which the overlap
+constraint depends on.
 
 Seeding is optional and destructive — it deletes all existing data — so
 against a remote database it refuses unless you pass `SEED_CONFIRM=yes`.
