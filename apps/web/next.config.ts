@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    immutableStaticFiles: false,
-  },
   // Next's own dev badge sits bottom-left, where our settings control lives.
   // It never ships to production anyway; hiding it keeps dev and prod honest
   // about what the corner actually contains. Compile and runtime errors are
