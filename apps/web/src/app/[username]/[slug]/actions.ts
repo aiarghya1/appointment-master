@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { loadPublicEventType, loadSlots } from "@/server/booking";
 import { isValidZone } from "@/lib/time";
-import { getDictionary } from "@/i18n/server";
+import { getDictionary, getLocale } from "@/i18n/server";
+import { sendBookingInvite } from "@/server/notify";
 
 export interface BookingFormState {
   error?: string;
@@ -103,6 +104,29 @@ export async function createBooking(
       };
     }
     throw error;
+  }
+
+  // The meeting is committed at this point. Sending the invitation is a
+  // best-effort follow-up: it is awaited because work started after the
+  // response is not guaranteed to run on a serverless host, but its failure is
+  // logged rather than surfaced, since the booking itself already succeeded
+  // and telling the attendee otherwise would be a lie.
+  const result = await sendBookingInvite({
+    uid,
+    title: `${eventType.title} between ${eventType.host.name ?? username} and ${name}`,
+    description: notes || null,
+    start,
+    end,
+    timeZone,
+    locale: await getLocale(),
+    dict,
+    pending: eventType.requiresConfirmation,
+    host: { name: eventType.host.name, email: eventType.host.email },
+    attendee: { name, email },
+  });
+
+  if (!result.sent && result.reason === "failed") {
+    console.error(`Booking ${uid} saved, but its invitation could not be sent: ${result.detail}`);
   }
 
   redirect(`/booking/${uid}`);

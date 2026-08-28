@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@appointment-master/availability": "*",
+    "@appointment-master/calendar": "*",
     "@appointment-master/db": "*",
     "luxon": "^3.7.2",
     "next": "16.3.3",

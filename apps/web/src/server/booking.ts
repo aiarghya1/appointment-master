@@ -35,6 +35,7 @@ export interface PublicEventType {
     id: string;
     name: string | null;
     username: string | null;
+    email: string;
     timeZone: string;
   };
   scheduleId: string | null;
@@ -64,6 +65,7 @@ export async function loadPublicEventType(
       hostId: schema.users.id,
       hostName: schema.users.name,
       hostUsername: schema.users.username,
+      hostEmail: schema.users.email,
       hostTimeZone: schema.users.timeZone,
       scheduleId: schema.schedules.id,
       scheduleTimeZone: schema.schedules.timeZone,
@@ -94,6 +96,7 @@ export async function loadPublicEventType(
       id: row.hostId,
       name: row.hostName,
       username: row.hostUsername,
+      email: row.hostEmail,
       timeZone: row.hostTimeZone,
     },
     scheduleId: row.scheduleId,

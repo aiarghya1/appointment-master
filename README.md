@@ -18,6 +18,7 @@ anyone else who visits, so do not put anything private in it.
 ```
 apps/web                 Next.js 16 (App Router) — booking pages, dashboard, API
 packages/availability    The scheduling engine. Pure, no I/O, no clock.
+packages/calendar        iCalendar invitation building. Pure, byte-for-byte tested.
 packages/db              Drizzle schema, migrations, and the overlap guard.
 ```
 
@@ -112,6 +113,27 @@ wire the pooled URL automatically, but `DIRECT_URL` still has to be set by hand
 from the provider's direct (unpooled) connection string, because migrations
 need locks the transaction pooler cannot hold.
 
+### Email invitations
+
+A confirmed booking emails the attendee an `.ics` invitation, so the time is
+blocked wherever they keep their calendar rather than only in this database.
+Two variables turn it on:
+
+```bash
+RESEND_API_KEY="re_..."
+EMAIL_FROM="bookings@your-verified-domain.com"
+```
+
+`EMAIL_FROM` must be on a domain verified with the provider; an unverified
+sender is rejected outright. With neither set — the normal state for a local
+checkout — bookings still succeed and simply send nothing, because the meeting
+is already committed by the time the email is attempted and a mail outage must
+never cost someone their booking.
+
+The invitation is `METHOD:REQUEST` and carries the booking's own UID, so a
+future reschedule or cancellation for that UID replaces the calendar entry
+instead of leaving a duplicate behind.
+
 ### Anywhere else
 
 Any Node host plus any Postgres 14+ works. Provide two variables — they may be
@@ -134,6 +156,7 @@ against a remote database it refuses unless you pass `SEED_CONFIRM=yes`.
 
 ## Status
 
-Foundation and scheduling core are in place. Auth and tenancy, calendar sync,
-notifications, team scheduling, payments and workflows, and the public API and
-embeds follow in that order.
+Foundation, scheduling core, and attendee email invitations are in place. Auth
+and tenancy, two-way calendar sync, host notifications and reminders, team
+scheduling, payments and workflows, and the public API and embeds follow in
+that order.

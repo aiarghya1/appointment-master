@@ -8,7 +8,11 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // Workspace packages ship TypeScript source rather than a build artefact,
   // so Next compiles them alongside the app.
-  transpilePackages: ["@appointment-master/availability", "@appointment-master/db"],
+  transpilePackages: [
+    "@appointment-master/availability",
+    "@appointment-master/calendar",
+    "@appointment-master/db",
+  ],
   // PGlite loads a WASM binary at runtime and must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite"],
   // Next blocks cross-origin requests to dev-only assets by default. Tunnelling
