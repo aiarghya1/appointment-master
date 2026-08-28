@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { interval, intersect, normalize } from "./interval";
+import { interval, normalize, overlaps } from "./interval";
 import type { Interval, LocalInterval, Schedule } from "./types";
 
 const MINUTES_PER_DAY = 1440;
@@ -54,7 +54,16 @@ function localIntervalsFor(schedule: Schedule, day: DateTime): LocalInterval[] {
  * Project a schedule's recurring rules and date overrides onto a concrete
  * window of instants.
  *
- * The returned cover is normalized and clipped to `window`.
+ * Spans are returned **whole** — overlapping the window, never trimmed to it.
+ * That distinction matters more than it looks: `generateSlots` anchors candidate
+ * start times to the beginning of each span, so a trimmed span would shift every
+ * slot by however much was cut off. Querying 10:00–11:00 of a 09:00–17:00 day
+ * would then produce candidates at 10:00, 10:30 … only by coincidence, and
+ * offset ones the moment the window edge fell mid-slot.
+ *
+ * Keeping spans whole makes slot generation window-independent: narrowing the
+ * query filters the results, it never re-anchors them. Callers wanting only the
+ * overlap can intersect afterwards.
  */
 export function expandSchedule(schedule: Schedule, window: Interval): Interval[] {
   const zone = schedule.timeZone;
@@ -79,5 +88,6 @@ export function expandSchedule(schedule: Schedule, window: Interval): Interval[]
     day = day.plus({ days: 1 });
   }
 
-  return intersect(normalize(spans), [window]);
+  // Filter to spans that touch the window, but do not trim them.
+  return normalize(spans).filter((span) => overlaps(span, window));
 }

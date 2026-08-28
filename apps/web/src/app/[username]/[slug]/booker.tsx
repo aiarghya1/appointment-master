@@ -190,10 +190,10 @@ export function Booker(props: BookerProps) {
           {...props}
           slot={chosenSlot}
           onDismiss={() => setChosenSlot(null)}
-          onConflict={() => {
-            setChosenSlot(null);
-            router.refresh();
-          }}
+          // Refresh the times behind the dialog so the taken slot disappears,
+          // but leave the dialog open. Closing it on conflict dismissed the
+          // only explanation the attendee was ever given.
+          onConflict={() => router.refresh()}
         />
       )}
     </main>
@@ -364,12 +364,37 @@ function BookingDialog({
           <input type="hidden" name="start" value={slot} />
           <input type="hidden" name="timeZone" value={timeZone} />
 
-          <Field label="Your name" name="name" autoComplete="name" required />
-          <Field label="Email" name="email" type="email" autoComplete="email" required />
-          <Field label="Anything we should know?" name="notes" multiline />
+          <Field
+            label="Your name"
+            name="name"
+            autoComplete="name"
+            required
+            defaultValue={state.values?.name}
+          />
+          <Field
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            defaultValue={state.values?.email}
+          />
+          <Field
+            label="Anything we should know?"
+            name="notes"
+            multiline
+            defaultValue={state.values?.notes}
+          />
 
           {state.error && (
-            <p role="alert" className="text-sm text-danger">
+            <p
+              role="alert"
+              className={
+                state.conflict
+                  ? "rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger"
+                  : "text-sm text-danger"
+              }
+            >
               {state.error}
             </p>
           )}
@@ -380,15 +405,17 @@ function BookingDialog({
               onClick={onDismiss}
               className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
             >
-              Back
+              {state.conflict ? "Pick another time" : "Back"}
             </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {pending ? "Booking…" : requiresConfirmation ? "Request booking" : "Confirm"}
-            </button>
+            {!state.conflict && (
+              <button
+                type="submit"
+                disabled={pending}
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
+              >
+                {pending ? "Booking…" : requiresConfirmation ? "Request booking" : "Confirm"}
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -403,6 +430,7 @@ function Field({
   required,
   autoComplete,
   multiline,
+  defaultValue,
 }: {
   label: string;
   name: string;
@@ -410,6 +438,7 @@ function Field({
   required?: boolean;
   autoComplete?: string;
   multiline?: boolean;
+  defaultValue?: string;
 }) {
   const shared =
     "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent";
@@ -420,13 +449,19 @@ function Field({
         {required && <span aria-hidden> *</span>}
       </span>
       {multiline ? (
-        <textarea name={name} rows={3} className={`${shared} resize-none`} />
+        <textarea
+          name={name}
+          rows={3}
+          defaultValue={defaultValue}
+          className={`${shared} resize-none`}
+        />
       ) : (
         <input
           name={name}
           type={type}
           required={required}
           autoComplete={autoComplete}
+          defaultValue={defaultValue}
           className={shared}
         />
       )}

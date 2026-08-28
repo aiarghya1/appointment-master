@@ -66,6 +66,7 @@ export function generateSlots(query: SlotQuery): Interval[] {
   const notice = eventType.minimumNoticeMinutes ?? 0;
 
   // Nothing before this instant is bookable, whatever the schedule says.
+  const windowEnd = window.end.getTime();
   const earliest = Math.max(window.start.getTime(), now.getTime() + notice * MINUTE_MS);
 
   const available = expandSchedule(schedule, window);
@@ -89,6 +90,11 @@ export function generateSlots(query: SlotQuery): Interval[] {
     }
 
     for (; start + duration * MINUTE_MS <= spanEnd; start += step * MINUTE_MS) {
+      // Spans are not trimmed to the window, so the window is enforced here.
+      // Anchoring stays tied to the span; only which slots survive depends on
+      // the query, which is what keeps narrowing a window a pure filter.
+      if (start + duration * MINUTE_MS > windowEnd) break;
+
       const candidate = interval(start, start + duration * MINUTE_MS);
       const guard = pad(candidate, before, after);
 

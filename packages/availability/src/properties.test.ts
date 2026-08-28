@@ -160,6 +160,24 @@ describe("generateSlots invariants", () => {
     );
   });
 
+  it("is window-independent — narrowing the query filters, never re-anchors", () => {
+    // The invariant that the booking flow depends on: re-checking a single slot
+    // by querying just its own window must return that slot. Violating it made
+    // valid bookings fail as phantom conflicts.
+    fc.assert(
+      fc.property(arbCase, ({ schedule, eventType, window, busy }) => {
+        const base = { now: window.start, schedule, eventType, busy } as const;
+        const wide = generateSlots({ ...base, window });
+
+        for (const slot of wide.slice(0, 12)) {
+          const exact = generateSlots({ ...base, window: { start: slot.start, end: slot.end } });
+          expect(exact.map((s) => s.start.toISOString())).toContain(slot.start.toISOString());
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
   it("only ever loses slots when busy time is added", () => {
     // Monotonicity: adding a commitment can remove availability but must never
     // conjure a slot that wasn't offered when the host was free.

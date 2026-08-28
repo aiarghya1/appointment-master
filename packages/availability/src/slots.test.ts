@@ -92,6 +92,49 @@ describe("generateSlots — basics", () => {
     expect(utc(slots)).toEqual(["09-07 09:05Z", "09-07 09:35Z", "09-07 10:05Z"]);
   });
 
+  it("returns the same slot when queried for exactly that slot's window", () => {
+    // Regression: the booking flow re-checks a chosen slot by querying just
+    // that slot's window before writing. When availability was trimmed to the
+    // query window, candidates were re-anchored to the trimmed edge and the
+    // slot came back missing — so every booking after the first of the day was
+    // silently rejected as a conflict.
+    const args = {
+      now: at("2026-09-01T00:00:00Z"),
+      schedule: nineToFive("UTC", [MON]),
+      eventType: { durationMinutes: 30 },
+    };
+    const wholeDay = generateSlots({
+      ...args,
+      window: windowOf("2026-09-07T00:00:00Z", "2026-09-08T00:00:00Z"),
+    });
+    expect(wholeDay.length).toBeGreaterThan(4);
+
+    for (const slot of wholeDay) {
+      const exact = generateSlots({ ...args, window: { start: slot.start, end: slot.end } });
+      expect(exact.map((s) => s.start.toISOString())).toEqual([slot.start.toISOString()]);
+    }
+  });
+
+  it("treats a narrower window as a filter, never a re-anchoring", () => {
+    const args = {
+      now: at("2026-09-01T00:00:00Z"),
+      schedule: nineToFive("UTC", [MON]),
+      eventType: { durationMinutes: 60 },
+    };
+    const wide = generateSlots({
+      ...args,
+      window: windowOf("2026-09-07T00:00:00Z", "2026-09-08T00:00:00Z"),
+    });
+    // A window starting mid-morning must not shift the grid to 10:30, 11:30…
+    const narrow = generateSlots({
+      ...args,
+      window: windowOf("2026-09-07T10:30:00Z", "2026-09-07T14:00:00Z"),
+    });
+
+    expect(utc(narrow)).toEqual(["09-07 11:00Z", "09-07 12:00Z", "09-07 13:00Z"]);
+    expect(utc(wide)).toEqual(expect.arrayContaining(utc(narrow)));
+  });
+
   it("rejects a non-positive duration", () => {
     expect(() =>
       generateSlots({

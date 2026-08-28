@@ -10,6 +10,12 @@ export interface BookingFormState {
   error?: string;
   /** Set when the slot went while the attendee was filling the form. */
   conflict?: boolean;
+  /**
+   * Echoed back so the form can repopulate itself. A server action re-renders
+   * the form on every result, which would otherwise wipe uncontrolled inputs
+   * and make the attendee retype their details to recover from an error.
+   */
+  values?: { name: string; email: string; notes: string };
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,26 +33,29 @@ export async function createBooking(
   const rawZone = String(formData.get("timeZone") ?? "");
   const timeZone = isValidZone(rawZone) ? rawZone : "UTC";
 
-  if (!name) return { error: "Please tell us your name." };
-  if (!EMAIL.test(email)) return { error: "That email address doesn't look right." };
+  const values = { name, email, notes };
+
+  if (!name) return { values, error: "Please tell us your name." };
+  if (!EMAIL.test(email)) return { values, error: "That email address doesn't look right." };
 
   const start = new Date(startIso);
-  if (Number.isNaN(start.getTime())) return { error: "That time is no longer valid." };
+  if (Number.isNaN(start.getTime())) return { values, error: "That time is no longer valid." };
 
   const eventType = await loadPublicEventType(username, slug);
-  if (!eventType) return { error: "This booking page is no longer available." };
+  if (!eventType) return { values, error: "This booking page is no longer available." };
 
   const end = new Date(start.getTime() + eventType.durationMinutes * 60_000);
 
   // Re-derive availability on the server. The posted start time came from the
   // browser, and a start time the host never offered — stale tab, edited form,
   // or a slot taken thirty seconds ago — must not become a booking.
-  const offered = await loadSlots(eventType, {
-    start: new Date(start.getTime() - 1),
-    end: new Date(end.getTime() + 1),
-  });
+  //
+  // Asking for exactly this slot's window is safe because slot generation is
+  // window-independent: narrowing the query filters the results rather than
+  // re-anchoring them, so a genuine slot still comes back at exactly `start`.
+  const offered = await loadSlots(eventType, { start, end });
   if (!offered.some((slot) => slot.start.getTime() === start.getTime())) {
-    return { conflict: true, error: "That slot has just been taken. Please choose another time." };
+    return { values, conflict: true, error: "That slot has just been taken. Please choose another time." };
   }
 
   const uid = randomUUID();
@@ -85,6 +94,7 @@ export async function createBooking(
     // The database refused the overlap, which is exactly its job.
     if (isBookingConflict(error)) {
       return {
+        values,
         conflict: true,
         error: "Someone just booked that time. Please pick another slot.",
       };
