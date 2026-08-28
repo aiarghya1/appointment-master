@@ -3,6 +3,7 @@
 import { DateTime } from "luxon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Credit } from "@/components/credit";
 import { ISO_DATE, describeZone, formatLongDate, monthGrid, shiftMonth } from "@/lib/time";
 import { createBooking, type BookingFormState } from "./actions";
 
@@ -61,7 +62,7 @@ export function Booker(props: BookerProps) {
   const slots = selectedDate ? (slotsByDate[selectedDate] ?? []) : [];
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-6xl items-center justify-center p-4 sm:p-8">
+    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col items-center justify-center gap-5 p-4 sm:p-8">
       <div className="grid w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)] lg:grid-cols-[20rem_1fr]">
         <EventSummary {...props} onTimeZoneChange={(tz) => navigate({ tz })} />
 
@@ -184,6 +185,8 @@ export function Booker(props: BookerProps) {
           </section>
         </div>
       </div>
+
+      <Credit />
 
       {chosenSlot && (
         <BookingDialog

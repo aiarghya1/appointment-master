@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Credit } from "@/components/credit";
 import { loadHostEventTypes } from "@/server/booking";
 
 interface PageProps {
@@ -58,6 +59,8 @@ export default async function HostPage({ params }: PageProps) {
           </li>
         ))}
       </ul>
+
+      <Credit />
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Credit } from "@/components/credit";
 
 export const metadata: Metadata = { title: "Booking confirmed" };
 
@@ -43,7 +44,7 @@ export default async function BookingConfirmationPage({ params }: PageProps) {
   const pending = booking.status === "pending";
 
   return (
-    <main className="mx-auto grid min-h-dvh max-w-lg place-items-center p-4">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-5 p-4">
       <div className="w-full rounded-[var(--radius-card)] border border-line bg-surface p-8 shadow-[var(--shadow-card)]">
         <span
           aria-hidden
@@ -89,6 +90,8 @@ export default async function BookingConfirmationPage({ params }: PageProps) {
           ← Back
         </Link>
       </div>
+
+      <Credit />
     </main>
   );
 }

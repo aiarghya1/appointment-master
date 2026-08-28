@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Credit } from "@/components/credit";
 
 export default function HomePage() {
   return (
@@ -35,6 +36,8 @@ export default function HomePage() {
           </span>
         </Link>
       </div>
+
+      <Credit className="mt-2" />
     </main>
   );
 }
