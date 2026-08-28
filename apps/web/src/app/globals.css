@@ -3,58 +3,113 @@
 /*
  * Design tokens.
  *
- * One neutral ramp plus a single accent, defined once in OKLCH so lightness
- * steps are perceptually even and the dark palette is a genuine re-mapping
- * rather than an inversion.
+ * One neutral ramp plus a single accent, defined in OKLCH so lightness steps
+ * are perceptually even and the dark palette is a genuine re-mapping rather
+ * than an inversion.
+ *
+ * Two layers on purpose. `@theme` maps Tailwind's utility names onto plain
+ * custom properties, and those properties get their *values* below. That
+ * indirection is what lets the palette be swapped at runtime — Tailwind
+ * resolves `bg-surface` to `var(--color-surface)` once, and we change what
+ * `--c-surface` means. Putting real values in `@theme` would bake the light
+ * palette into every utility and make the theme toggle impossible.
+ *
+ * Theme resolution, in order:
+ *   [data-theme="light"|"dark"] — the viewer's explicit choice, always wins
+ *   prefers-color-scheme        — the OS, used when no choice is stored
+ *   :root                       — light, the final fallback
  */
 @theme {
-  --color-canvas: oklch(99% 0.003 265);
-  --color-surface: oklch(100% 0 0);
-  --color-surface-sunken: oklch(97.2% 0.004 265);
-  --color-line: oklch(92.5% 0.005 265);
-  --color-line-strong: oklch(87% 0.008 265);
-  --color-ink: oklch(21% 0.015 265);
-  --color-ink-muted: oklch(48% 0.012 265);
-  --color-ink-faint: oklch(62% 0.01 265);
-  --color-accent: oklch(54% 0.19 268);
-  --color-accent-hover: oklch(48% 0.19 268);
-  --color-accent-soft: oklch(96% 0.025 268);
-  --color-accent-ring: oklch(54% 0.19 268 / 0.35);
-  --color-danger: oklch(55% 0.2 25);
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-surface-sunken: var(--c-surface-sunken);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-ink: var(--c-ink);
+  --color-ink-muted: var(--c-ink-muted);
+  --color-ink-faint: var(--c-ink-faint);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-danger: var(--c-danger);
 
   --radius-card: 1rem;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --shadow-card: 0 1px 2px oklch(21% 0.015 265 / 0.04), 0 8px 24px -8px oklch(21% 0.015 265 / 0.10);
-  --shadow-pop: 0 2px 4px oklch(21% 0.015 265 / 0.05), 0 16px 40px -12px oklch(21% 0.015 265 / 0.16);
+  --shadow-card: 0 1px 2px var(--c-shadow-a), 0 8px 24px -8px var(--c-shadow-b);
+  --shadow-pop: 0 2px 4px var(--c-shadow-a), 0 16px 40px -12px var(--c-shadow-b);
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-canvas: oklch(16.5% 0.012 265);
-    --color-surface: oklch(20.5% 0.014 265);
-    --color-surface-sunken: oklch(18% 0.013 265);
-    --color-line: oklch(28% 0.014 265);
-    --color-line-strong: oklch(35% 0.016 265);
-    --color-ink: oklch(96% 0.005 265);
-    --color-ink-muted: oklch(72% 0.012 265);
-    --color-ink-faint: oklch(56% 0.012 265);
-    --color-accent: oklch(70% 0.16 268);
-    --color-accent-hover: oklch(77% 0.15 268);
-    --color-accent-soft: oklch(28% 0.05 268);
-    --color-accent-ring: oklch(70% 0.16 268 / 0.4);
-    --color-danger: oklch(70% 0.17 25);
+/* Light — the base palette. */
+:root {
+  color-scheme: light;
 
-    --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 8px 24px -8px oklch(0% 0 0 / 0.5);
-    --shadow-pop: 0 2px 4px oklch(0% 0 0 / 0.35), 0 16px 40px -12px oklch(0% 0 0 / 0.6);
+  --c-canvas: oklch(99% 0.003 265);
+  --c-surface: oklch(100% 0 0);
+  --c-surface-sunken: oklch(97.2% 0.004 265);
+  --c-line: oklch(92.5% 0.005 265);
+  --c-line-strong: oklch(87% 0.008 265);
+  --c-ink: oklch(21% 0.015 265);
+  --c-ink-muted: oklch(48% 0.012 265);
+  --c-ink-faint: oklch(62% 0.01 265);
+  --c-accent: oklch(54% 0.19 268);
+  --c-accent-hover: oklch(48% 0.19 268);
+  --c-accent-soft: oklch(96% 0.025 268);
+  --c-danger: oklch(55% 0.2 25);
+
+  --c-shadow-a: oklch(21% 0.015 265 / 0.04);
+  --c-shadow-b: oklch(21% 0.015 265 / 0.1);
+}
+
+/*
+ * Dark values, applied from two places: the OS preference (unless the viewer
+ * explicitly chose light) and the viewer's explicit dark choice. The pair is
+ * duplicated rather than combined because a selector list is invalid the
+ * moment one half sits inside a media query.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --c-canvas: oklch(16.5% 0.012 265);
+    --c-surface: oklch(20.5% 0.014 265);
+    --c-surface-sunken: oklch(18% 0.013 265);
+    --c-line: oklch(28% 0.014 265);
+    --c-line-strong: oklch(35% 0.016 265);
+    --c-ink: oklch(96% 0.005 265);
+    --c-ink-muted: oklch(72% 0.012 265);
+    --c-ink-faint: oklch(56% 0.012 265);
+    --c-accent: oklch(70% 0.16 268);
+    --c-accent-hover: oklch(77% 0.15 268);
+    --c-accent-soft: oklch(28% 0.05 268);
+    --c-danger: oklch(70% 0.17 25);
+
+    --c-shadow-a: oklch(0% 0 0 / 0.3);
+    --c-shadow-b: oklch(0% 0 0 / 0.5);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-canvas: oklch(16.5% 0.012 265);
+  --c-surface: oklch(20.5% 0.014 265);
+  --c-surface-sunken: oklch(18% 0.013 265);
+  --c-line: oklch(28% 0.014 265);
+  --c-line-strong: oklch(35% 0.016 265);
+  --c-ink: oklch(96% 0.005 265);
+  --c-ink-muted: oklch(72% 0.012 265);
+  --c-ink-faint: oklch(56% 0.012 265);
+  --c-accent: oklch(70% 0.16 268);
+  --c-accent-hover: oklch(77% 0.15 268);
+  --c-accent-soft: oklch(28% 0.05 268);
+  --c-danger: oklch(70% 0.17 25);
+
+  --c-shadow-a: oklch(0% 0 0 / 0.3);
+  --c-shadow-b: oklch(0% 0 0 / 0.5);
 }
 
 @layer base {
-  html {
-    color-scheme: light dark;
-  }
-
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);

@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Credit } from "@/components/credit";
+import type { Dictionary } from "@/i18n/dictionaries";
 import { ISO_DATE, describeZone, formatLongDate, monthGrid, shiftMonth } from "@/lib/time";
 import { createBooking, type BookingFormState } from "./actions";
 
@@ -20,14 +21,15 @@ interface BookerProps {
   month: string;
   selectedDate: string | null;
   hour12: boolean;
+  locale: string;
+  t: Dictionary["booking"];
+  creditLabels: Dictionary["credit"];
   /** ISO instants, bucketed by the local date they fall on in `timeZone`. */
   slotsByDate: Record<string, string[]>;
 }
 
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 export function Booker(props: BookerProps) {
-  const { timeZone, month, selectedDate, slotsByDate, hour12 } = props;
+  const { timeZone, month, selectedDate, slotsByDate, hour12, locale, t } = props;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -58,7 +60,15 @@ export function Booker(props: BookerProps) {
 
   const days = useMemo(() => monthGrid(month, timeZone), [month, timeZone]);
   const today = DateTime.now().setZone(timeZone).toFormat(ISO_DATE);
-  const monthLabel = DateTime.fromFormat(month, "yyyy-MM", { zone: timeZone }).toFormat("LLLL yyyy");
+  const monthLabel = DateTime.fromFormat(month, "yyyy-MM", { zone: timeZone })
+    .setLocale(locale)
+    .toFormat("LLLL yyyy");
+  const weekdayLabels = useMemo(() => {
+    // Derived from the locale rather than hard-coded, so the column headers
+    // are translated and follow a Monday-first week like the grid does.
+    const monday = DateTime.fromObject({ weekday: 1 }, { zone: "utc" }).setLocale(locale);
+    return Array.from({ length: 7 }, (_, i) => monday.plus({ days: i }).toFormat("ccccc"));
+  }, [locale]);
   const slots = selectedDate ? (slotsByDate[selectedDate] ?? []) : [];
 
   return (
@@ -68,20 +78,20 @@ export function Booker(props: BookerProps) {
 
         <div className="grid gap-0 sm:grid-cols-[1fr_15rem]">
           <section
-            aria-label="Choose a date"
+            aria-label={t.chooseDate}
             className={`border-line p-6 sm:border-r ${isPending ? "opacity-60" : ""} transition-opacity`}
           >
             <header className="mb-5 flex items-center justify-between">
-              <h2 className="text-sm font-semibold tracking-tight">{monthLabel}</h2>
+              <h2 className="text-sm font-semibold tracking-tight capitalize">{monthLabel}</h2>
               <div className="flex gap-1">
                 <IconButton
-                  label="Previous month"
+                  label={t.previousMonth}
                   onClick={() => navigate({ month: shiftMonth(month, -1, timeZone), date: null })}
                 >
                   ‹
                 </IconButton>
                 <IconButton
-                  label="Next month"
+                  label={t.nextMonth}
                   onClick={() => navigate({ month: shiftMonth(month, 1, timeZone), date: null })}
                 >
                   ›
@@ -90,19 +100,20 @@ export function Booker(props: BookerProps) {
             </header>
 
             <div className="grid grid-cols-7 gap-1" role="grid">
-              {WEEKDAY_LABELS.map((label) => (
+              {weekdayLabels.map((label, i) => (
                 <div
-                  key={label}
+                  key={i}
                   className="pb-2 text-center text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint"
                 >
-                  {label.slice(0, 2)}
+                  {label}
                 </div>
               ))}
 
               {days.map((day) => {
                 const key = day.toFormat(ISO_DATE);
                 const inMonth = day.toFormat("yyyy-MM") === month;
-                const available = (slotsByDate[key]?.length ?? 0) > 0;
+                const count = slotsByDate[key]?.length ?? 0;
+                const available = count > 0;
                 const isSelected = key === selectedDate;
 
                 return (
@@ -111,8 +122,8 @@ export function Booker(props: BookerProps) {
                     type="button"
                     disabled={!available}
                     aria-current={key === today ? "date" : undefined}
-                    aria-label={`${formatLongDate(key, timeZone)}${
-                      available ? `, ${slotsByDate[key]!.length} slots` : ", unavailable"
+                    aria-label={`${formatLongDate(key, timeZone)} — ${
+                      available ? `${count} ${t.slotsAvailable}` : t.unavailable
                     }`}
                     onClick={() => {
                       setChosenSlot(null);
@@ -131,7 +142,11 @@ export function Booker(props: BookerProps) {
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    {day.day}
+                    {/* Formatted through the locale rather than printed as a
+                        number, so the grid uses the same numerals as the month
+                        heading above it — Luxon localises those, and Latin days
+                        under a Bengali heading looked like a bug. */}
+                    {day.setLocale(locale).toFormat("d")}
                     {key === today && (
                       <span
                         aria-hidden
@@ -146,14 +161,14 @@ export function Booker(props: BookerProps) {
             </div>
           </section>
 
-          <section aria-label="Choose a time" className="flex max-h-[32rem] flex-col p-6 sm:pl-5">
+          <section aria-label={t.chooseTime} className="flex max-h-[32rem] flex-col p-6 sm:pl-5">
             {selectedDate ? (
               <>
                 <header className="mb-4 flex items-baseline justify-between gap-2">
-                  <h2 className="text-sm font-semibold tracking-tight">
-                    {DateTime.fromFormat(selectedDate, ISO_DATE, { zone: timeZone }).toFormat(
-                      "ccc d LLL",
-                    )}
+                  <h2 className="text-sm font-semibold tracking-tight capitalize">
+                    {DateTime.fromFormat(selectedDate, ISO_DATE, { zone: timeZone })
+                      .setLocale(locale)
+                      .toFormat("ccc d LLL")}
                   </h2>
                   <button
                     type="button"
@@ -171,6 +186,7 @@ export function Booker(props: BookerProps) {
                       iso={iso}
                       timeZone={timeZone}
                       hour12={hour12}
+                      locale={locale}
                       selected={chosenSlot === iso}
                       onSelect={() => setChosenSlot(iso)}
                     />
@@ -178,15 +194,13 @@ export function Booker(props: BookerProps) {
                 </div>
               </>
             ) : (
-              <p className="my-auto text-center text-sm text-ink-muted">
-                Nothing available this month.
-              </p>
+              <p className="my-auto text-center text-sm text-ink-muted">{t.nothingThisMonth}</p>
             )}
           </section>
         </div>
       </div>
 
-      <Credit />
+      <Credit labels={props.creditLabels} />
 
       {chosenSlot && (
         <BookingDialog
@@ -209,6 +223,8 @@ function EventSummary({
   durationMinutes,
   hostName,
   timeZone,
+  locale,
+  t,
   onTimeZoneChange,
 }: BookerProps & { onTimeZoneChange: (zone: string) => void }) {
   return (
@@ -227,20 +243,17 @@ function EventSummary({
         )}
       </div>
 
-      <dl className="flex flex-col gap-2 text-sm text-ink-muted">
-        <div className="flex items-center gap-2">
-          <span aria-hidden>◷</span>
-          <dt className="sr-only">Duration</dt>
-          <dd>{durationMinutes} minutes</dd>
-        </div>
-      </dl>
+      <p className="flex items-center gap-2 text-sm text-ink-muted">
+        <span aria-hidden>◷</span>
+        {new Intl.NumberFormat(locale).format(durationMinutes)} {t.minutes}
+      </p>
 
       <div className="mt-auto">
         <label
           htmlFor="timezone"
           className="mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-wider text-ink-faint"
         >
-          Time zone
+          {t.timeZone}
         </label>
         <TimeZoneSelect value={timeZone} onChange={onTimeZoneChange} />
       </div>
@@ -248,13 +261,7 @@ function EventSummary({
   );
 }
 
-function TimeZoneSelect({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (zone: string) => void;
-}) {
+function TimeZoneSelect({ value, onChange }: { value: string; onChange: (zone: string) => void }) {
   // The full zone list is built only after mount. `Intl.supportedValuesOf`
   // reads the host's ICU data, and Node's list does not match the browser's —
   // rendering it during SSR would guarantee a hydration mismatch. Until then
@@ -289,16 +296,20 @@ function SlotButton({
   iso,
   timeZone,
   hour12,
+  locale,
   selected,
   onSelect,
 }: {
   iso: string;
   timeZone: string;
   hour12: boolean;
+  locale: string;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const label = DateTime.fromISO(iso, { zone: timeZone }).toFormat(hour12 ? "h:mm a" : "HH:mm");
+  const label = DateTime.fromISO(iso, { zone: timeZone })
+    .setLocale(locale)
+    .toFormat(hour12 ? "h:mm a" : "HH:mm");
   return (
     <button
       type="button"
@@ -324,12 +335,14 @@ function BookingDialog({
   requiresConfirmation,
   timeZone,
   hour12,
+  locale,
+  t,
   slot,
   onDismiss,
   onConflict,
 }: BookerProps & { slot: string; onDismiss: () => void; onConflict: () => void }) {
   const [state, formAction, pending] = useActionState<BookingFormState, FormData>(createBooking, {});
-  const start = DateTime.fromISO(slot, { zone: timeZone });
+  const start = DateTime.fromISO(slot, { zone: timeZone }).setLocale(locale);
 
   useEffect(() => {
     if (state.conflict) onConflict();
@@ -352,12 +365,13 @@ function BookingDialog({
     >
       <div className="w-full max-w-md rounded-[var(--radius-card)] border border-line bg-surface p-6 shadow-[var(--shadow-pop)]">
         <h2 id="booking-heading" className="text-lg font-semibold tracking-tight">
-          Confirm your booking
+          {t.confirmHeading}
         </h2>
         <p className="mt-1 text-sm text-ink-muted">
-          {title} with {hostName} — {durationMinutes} minutes
+          {title} {t.with} {hostName} — {new Intl.NumberFormat(locale).format(durationMinutes)}{" "}
+          {t.minutes}
         </p>
-        <p className="tabular mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent">
+        <p className="tabular mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent capitalize">
           {start.toFormat(hour12 ? "cccc d LLLL, h:mm a" : "cccc d LLLL, HH:mm")}
         </p>
 
@@ -368,26 +382,21 @@ function BookingDialog({
           <input type="hidden" name="timeZone" value={timeZone} />
 
           <Field
-            label="Your name"
+            label={t.yourName}
             name="name"
             autoComplete="name"
             required
             defaultValue={state.values?.name}
           />
           <Field
-            label="Email"
+            label={t.email}
             name="email"
             type="email"
             autoComplete="email"
             required
             defaultValue={state.values?.email}
           />
-          <Field
-            label="Anything we should know?"
-            name="notes"
-            multiline
-            defaultValue={state.values?.notes}
-          />
+          <Field label={t.notes} name="notes" multiline defaultValue={state.values?.notes} />
 
           {state.error && (
             <p
@@ -408,7 +417,7 @@ function BookingDialog({
               onClick={onDismiss}
               className="rounded-lg px-4 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
             >
-              {state.conflict ? "Pick another time" : "Back"}
+              {state.conflict ? t.pickAnother : t.back}
             </button>
             {!state.conflict && (
               <button
@@ -416,7 +425,7 @@ function BookingDialog({
                 disabled={pending}
                 className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
               >
-                {pending ? "Booking…" : requiresConfirmation ? "Request booking" : "Confirm"}
+                {pending ? t.booking : requiresConfirmation ? t.request : t.confirm}
               </button>
             )}
           </div>

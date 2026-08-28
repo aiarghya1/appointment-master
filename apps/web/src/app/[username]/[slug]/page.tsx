@@ -8,6 +8,7 @@ import {
   isValidZone,
   monthWindow,
 } from "@/lib/time";
+import { getDictionary, getLocale } from "@/i18n/server";
 import { Booker } from "./booker";
 
 interface PageProps {
@@ -33,7 +34,11 @@ export default async function BookingPage({ params, searchParams }: PageProps) {
   const { username, slug } = await params;
   const sp = await searchParams;
 
-  const eventType = await loadPublicEventType(username, slug);
+  const [eventType, dict, locale] = await Promise.all([
+    loadPublicEventType(username, slug),
+    getDictionary(),
+    getLocale(),
+  ]);
   if (!eventType) notFound();
 
   // Until the browser tells us otherwise, render in the host's zone. The client
@@ -66,6 +71,9 @@ export default async function BookingPage({ params, searchParams }: PageProps) {
       month={month}
       selectedDate={selectedDate}
       hour12={one(sp.hour12) !== "false"}
+      locale={locale}
+      t={dict.booking}
+      creditLabels={dict.credit}
       slotsByDate={Object.fromEntries(
         [...byDate].map(([date, list]) => [date, list.map((s) => s.start.toISOString())]),
       )}

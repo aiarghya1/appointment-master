@@ -5,8 +5,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Credit } from "@/components/credit";
+import { getDictionary, getLocale } from "@/i18n/server";
 
-export const metadata: Metadata = { title: "Booking confirmed" };
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return { title: dict.confirmation.booked };
+}
 
 interface PageProps {
   params: Promise<{ uid: string }>;
@@ -14,7 +18,7 @@ interface PageProps {
 
 export default async function BookingConfirmationPage({ params }: PageProps) {
   const { uid } = await params;
-  const db = await getDb();
+  const [db, dict, locale] = await Promise.all([getDb(), getDictionary(), getLocale()]);
 
   const rows = await db
     .select({
@@ -38,8 +42,10 @@ export default async function BookingConfirmationPage({ params }: PageProps) {
   if (!booking) notFound();
 
   const zone = booking.attendeeTimeZone;
-  const start = DateTime.fromJSDate(booking.startsAt, { zone });
-  const end = DateTime.fromJSDate(booking.endsAt, { zone });
+  // Luxon localises month and weekday names from the locale, so the date reads
+  // naturally rather than being English words inside a translated page.
+  const start = DateTime.fromJSDate(booking.startsAt, { zone }).setLocale(locale);
+  const end = DateTime.fromJSDate(booking.endsAt, { zone }).setLocale(locale);
   const cancelled = booking.status === "cancelled" || booking.status === "rejected";
   const pending = booking.status === "pending";
 
@@ -57,41 +63,43 @@ export default async function BookingConfirmationPage({ params }: PageProps) {
 
         <h1 className="mt-5 text-xl font-semibold tracking-tight">
           {cancelled
-            ? "This booking was cancelled"
+            ? dict.confirmation.cancelled
             : pending
-              ? "Awaiting confirmation"
-              : "You're booked"}
+              ? dict.confirmation.pending
+              : dict.confirmation.booked}
         </h1>
         <p className="mt-1.5 text-sm text-ink-muted">
           {pending
-            ? `${booking.hostName ?? "The host"} will confirm shortly. We'll email ${booking.attendeeEmail} either way.`
-            : `A calendar invitation is on its way to ${booking.attendeeEmail}.`}
+            ? `${booking.hostName ?? ""} ${dict.confirmation.willConfirm}`
+            : `${dict.confirmation.invitationSent} ${booking.attendeeEmail}`}
         </p>
 
         <dl className="mt-6 flex flex-col gap-3 border-t border-line pt-6 text-sm">
-          <Row label="What">{booking.title}</Row>
-          <Row label="When">
+          <Row label={dict.confirmation.what}>{booking.title}</Row>
+          <Row label={dict.confirmation.when}>
             <span className="tabular">
               {start.toFormat("cccc, d LLLL yyyy")}
               <br />
               {start.toFormat("h:mm a")} – {end.toFormat("h:mm a")} ({start.toFormat("ZZZZ")})
             </span>
           </Row>
-          <Row label="Who">
-            {booking.hostName} and {booking.attendeeName}
+          <Row label={dict.confirmation.who}>
+            {booking.hostName} {dict.confirmation.and} {booking.attendeeName}
           </Row>
-          {booking.description && <Row label="Notes">{booking.description}</Row>}
+          {booking.description && (
+            <Row label={dict.confirmation.notes}>{booking.description}</Row>
+          )}
         </dl>
 
         <Link
           href="/"
           className="mt-8 inline-block text-sm font-medium text-accent transition-opacity hover:opacity-70"
         >
-          ← Back
+          ← {dict.confirmation.backHome}
         </Link>
       </div>
 
-      <Credit />
+      <Credit labels={dict.credit} />
     </main>
   );
 }

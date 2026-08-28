@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { loadPublicEventType, loadSlots } from "@/server/booking";
 import { isValidZone } from "@/lib/time";
+import { getDictionary } from "@/i18n/server";
 
 export interface BookingFormState {
   error?: string;
@@ -34,15 +35,17 @@ export async function createBooking(
   const timeZone = isValidZone(rawZone) ? rawZone : "UTC";
 
   const values = { name, email, notes };
+  // Errors are shown to the attendee, so they follow the page language.
+  const dict = await getDictionary();
 
-  if (!name) return { values, error: "Please tell us your name." };
-  if (!EMAIL.test(email)) return { values, error: "That email address doesn't look right." };
+  if (!name) return { values, error: dict.errors.nameRequired };
+  if (!EMAIL.test(email)) return { values, error: dict.errors.emailInvalid };
 
   const start = new Date(startIso);
-  if (Number.isNaN(start.getTime())) return { values, error: "That time is no longer valid." };
+  if (Number.isNaN(start.getTime())) return { values, error: dict.errors.timeInvalid };
 
   const eventType = await loadPublicEventType(username, slug);
-  if (!eventType) return { values, error: "This booking page is no longer available." };
+  if (!eventType) return { values, error: dict.errors.pageGone };
 
   const end = new Date(start.getTime() + eventType.durationMinutes * 60_000);
 
@@ -55,7 +58,7 @@ export async function createBooking(
   // re-anchoring them, so a genuine slot still comes back at exactly `start`.
   const offered = await loadSlots(eventType, { start, end });
   if (!offered.some((slot) => slot.start.getTime() === start.getTime())) {
-    return { values, conflict: true, error: "That slot has just been taken. Please choose another time." };
+    return { values, conflict: true, error: dict.errors.slotTaken };
   }
 
   const uid = randomUUID();
@@ -96,7 +99,7 @@ export async function createBooking(
       return {
         values,
         conflict: true,
-        error: "Someone just booked that time. Please pick another slot.",
+        error: dict.errors.raceLost,
       };
     }
     throw error;

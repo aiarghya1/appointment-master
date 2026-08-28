@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Credit } from "@/components/credit";
+import { getDictionary, getLocale } from "@/i18n/server";
 import { loadHostEventTypes } from "@/server/booking";
 
 interface PageProps {
@@ -16,7 +17,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function HostPage({ params }: PageProps) {
   const { username } = await params;
-  const eventTypes = await loadHostEventTypes(username);
+  const [eventTypes, dict, locale] = await Promise.all([
+    loadHostEventTypes(username),
+    getDictionary(),
+    getLocale(),
+  ]);
   if (eventTypes.length === 0) notFound();
 
   const hostName = eventTypes[0]!.hostName ?? username;
@@ -46,7 +51,8 @@ export default async function HostPage({ params }: PageProps) {
                   <p className="mt-1 text-sm text-ink-muted text-pretty">{eventType.description}</p>
                 )}
                 <p className="mt-2 text-xs font-medium text-ink-faint">
-                  {eventType.durationMinutes} minutes
+                  {new Intl.NumberFormat(locale).format(eventType.durationMinutes)}{" "}
+                  {dict.booking.minutes}
                 </p>
               </div>
               <span
@@ -60,7 +66,7 @@ export default async function HostPage({ params }: PageProps) {
         ))}
       </ul>
 
-      <Credit />
+      <Credit labels={dict.credit} />
     </main>
   );
 }
